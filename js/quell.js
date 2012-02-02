@@ -78,7 +78,9 @@
 			6: "leftSpike",
 			7: "rightSpike",
 			8: "allWaysSpike",
-			9: "nothing"
+			9: "nothing",
+			10: "openGate",
+			11: "closedGate"
 		}
 		
 		this.init = function() {
