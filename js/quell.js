@@ -1,4 +1,4 @@
-(function(){
+(function(window){
 
 	var Quell = {
 		width: 608,
@@ -11,7 +11,30 @@
 		mapWidth: 0,
 		numOfSpheres: 0,
 		loop: '',
-		debug: 0
+		debug: 0,
+		maps: {
+			level1: 
+				[
+					[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+					[1,0,0,0,0,0,2,3,0,0,0,3,0,0,1],
+					[1,0,0,0,2,0,9,0,0,6,2,0,0,0,1],
+					[1,0,0,0,0,4,0,2,0,2,2,3,0,0,1],
+					[1,0,0,0,0,2,0,3,0,2,0,2,0,0,1],
+					[1,0,3,0,0,2,3,0,0,0,0,0,0,0,1],
+					[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]	
+				],
+			level2: 
+				[
+					[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+					[1,0,0,0,0,0,2,3,0,0,0,3,0,0,1],
+					[1,0,0,0,2,0,9,0,0,6,2,0,0,0,1],
+					[1,0,0,0,0,4,0,2,0,2,2,3,0,0,1],
+					[1,0,0,0,0,2,0,3,0,2,0,2,0,0,1],
+					[1,0,3,0,0,2,3,0,0,0,0,0,0,0,1],
+					[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]	
+				],
+		},
+		currentMap: []
 	};
 	
 	var images;
@@ -38,8 +61,17 @@
 		return images;
 	}
 	
-	debug('Starting...');
+	// http://stackoverflow.com/questions/122102/what-is-the-most-efficient-way-to-clone-a-javascript-object
+	function clone(obj){
+	    if(obj == null || typeof(obj) != 'object')
+	        return obj;
 	
+	    var temp = obj.constructor(); // changed
+	
+	    for(var key in obj)
+	        temp[key] = clone(obj[key]);
+	    return temp;
+	}	
 	
 /*******************************************************************************
  * Map Class
@@ -59,23 +91,13 @@
 			9: "nothing"
 		}
 		
-		this.collisionMap = [
-			[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-			[1,0,0,0,0,0,2,3,0,0,0,3,0,0,1],
-			[1,0,0,0,2,0,9,0,0,6,2,0,0,0,1],
-			[1,0,0,0,0,4,0,2,0,2,2,3,0,0,1],
-			[1,0,0,0,0,2,0,3,0,2,0,2,0,0,1],
-			[1,0,3,0,0,2,3,0,0,0,0,0,0,0,1],
-			[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]	
-		];
-		
 		this.init = function() {
-			Quell.mapHeight = this.collisionMap.length;
-			Quell.mapWidth = this.collisionMap[0].length;
+			Quell.mapHeight = Quell.currentMap.length;
+			Quell.mapWidth = Quell.currentMap[0].length;
 			
-			for (i = 0, j = this.collisionMap.length; i < j; i++) {
-				for (x = 0, y = this.collisionMap[i].length; x < y; x++) {
-					if (this.collisionMap[i][x] == 3) {
+			for (i = 0, j = Quell.currentMap.length; i < j; i++) {
+				for (x = 0, y = Quell.currentMap[i].length; x < y; x++) {
+					if (Quell.currentMap[i][x] == 3) {
 						Quell.numOfSpheres++;
 					}	
 				}
@@ -92,11 +114,11 @@
 			
 			var mapX = mapY = 0;
 			
-			for (i = 0, j = this.collisionMap.length; i < j; i++) {
+			for (i = 0, j = Quell.currentMap.length; i < j; i++) {
 				
-				for (x = 0, y = this.collisionMap[i].length; x < y; x++) {
+				for (x = 0, y = Quell.currentMap[i].length; x < y; x++) {
 					
-					Quell.draw.tile(this.mapDefinitions[this.collisionMap[i][x]], mapX, mapY);
+					Quell.draw.tile(this.mapDefinitions[Quell.currentMap[i][x]], mapX, mapY);
 					mapX = mapX + Quell.tileSize;
 				}
 				
@@ -108,18 +130,17 @@
 	
 	
 /*******************************************************************************
- * Bubble Class
+ * Raindrop Class
  ******************************************************************************/
 
-	function Bubble(collisionMap) {
+	function Raindrop() {
 		
 		this.started = false;
 		this.moving = false;
 		this.radius = 15;
 		this.direction = '';
-		this.x = 0; // bubble's center 
+		this.x = 0; // Raindrop's center 
 		this.y = 0;
-		this.collisionMap = collisionMap;
 		this.speed = 10;
 		this.currentTile = {};
 		
@@ -129,12 +150,12 @@
 			
 			$this.currentTile = getCurrentTile(); 
 			
-			switch ($this.collisionMap[$this.currentTile['y']][$this.currentTile['x']]) {
+			switch (Quell.currentMap[$this.currentTile['y']][$this.currentTile['x']]) {
 				case 1:
 					debug('hitting a wall!!!!')
 					if (wallStopTest($this.currentTile['x'], $this.currentTile['y'])) {
 						
-						stopBubble($this.currentTile['x'], $this.currentTile['y']);
+						stopRaindrop($this.currentTile['x'], $this.currentTile['y']);
 						
 						return true;
 					}
@@ -143,13 +164,13 @@
 				case 2:
 					debug('stop stop stop');
 					
-					stopBubble($this.currentTile['x'], $this.currentTile['y']);
+					stopRaindrop($this.currentTile['x'], $this.currentTile['y']);
 					
 					return true;
 					break;
 				case 3:
 					debug('got a sphere!');
-					$this.collisionMap[$this.currentTile['y']][$this.currentTile['x']] = 0;
+					Quell.currentMap[$this.currentTile['y']][$this.currentTile['x']] = 0;
 					Quell.numOfSpheres--;
 					
 					if (Quell.numOfSpheres == 0) {
@@ -186,21 +207,21 @@
 				clearInterval(Quell.loop);
 				return false;
 			} else {
-				stopBubble($this.currentTile['x'], $this.currentTile['y']);
+				stopRaindrop($this.currentTile['x'], $this.currentTile['y']);
 				return true;
 			}
 		}
 		
-		// Tests whether the opposite side of the map to the one that the bubble is going through
-		// has a wall blocking it. MUST BE ABLE TO SIMPLIFY IT SURELY!!!!!
+		// Tests whether the opposite side of the map to the one that the Raindrop is going through
+		// has a wall/spike/gate blocking it. MUST BE ABLE TO SIMPLIFY IT SURELY!!!!!
 		var wallStopTest = function(x, y) {
 			switch ($this.direction) {
 				case 'left': 
 					for (i = (Quell.mapWidth - 1); i >= 0; i--) {
-						if ($this.collisionMap[y][i] == 1) break;
+						if (Quell.currentMap[y][i] == 1) break;
 					}
 					
-					var tile = $this.collisionMap[y][i-1];
+					var tile = Quell.currentMap[y][i-1];
 					
 					if (tile == 2 || tile == 4 || tile == 5 || tile == 6) {
 						return true;
@@ -210,10 +231,10 @@
 					break;
 				case 'up':
 					for (i = (Quell.mapHeight - 1); i >= 0; i--) {
-						if ($this.collisionMap[i][x] == 1) break;
+						if (Quell.currentMap[i][x] == 1) break;
 					}
 					
-					var tile = $this.collisionMap[i-1][x]; 
+					var tile = Quell.currentMap[i-1][x]; 
 					
 					if (tile == 2 || tile == 4 || tile == 6 || tile == 7) {
 						return true;
@@ -223,10 +244,10 @@
 					break;
 				case 'right':
 					for (i = 0; i <= Quell.mapWidth; i++) {
-						if ($this.collisionMap[y][i] == 1) break;
+						if (Quell.currentMap[y][i] == 1) break;
 					}
 					
-					var test = $this.collisionMap[y][i+1];	
+					var test = Quell.currentMap[y][i+1];	
 					
 					if (test == 2 || test == 4 || test == 5 || test == 7) {
 						return true;
@@ -237,10 +258,10 @@
 					break;
 				case 'down':
 					for (i = 0; i <= Quell.mapHeight; i++) {
-						if ($this.collisionMap[i][x] == 1) break;
+						if (Quell.currentMap[i][x] == 1) break;
 					}
 					
-					var test = $this.collisionMap[i+1][x];
+					var test = Quell.currentMap[i+1][x];
 					
 					if (test == 2 || test == 5 || test == 6 || test == 7) {
 						return true;
@@ -252,7 +273,7 @@
 		} 
 		
 		var edgeTest = function() {
-			if ($this.collisionMap[$this.currentTile['y']][$this.currentTile['x']] == 1) {
+			if (Quell.currentMap[$this.currentTile['y']][$this.currentTile['x']] == 1) {
 				underEdge()
 			}
 		}
@@ -322,7 +343,7 @@
 			}
 		}
 		
-		var stopBubble = function(x, y) {
+		var stopRaindrop = function(x, y) {
 					
 			switch ($this.direction) {
 				case 'left':
@@ -339,25 +360,23 @@
 					break; 
 			}
 					
-			debug(x + ' ' + y);
-	
-			$this.x = (x * Quell.tileSize) + (Quell.tileSize / 2),
+			this.x = (x * Quell.tileSize) + (Quell.tileSize / 2),
 			$this.y = (y * Quell.tileSize) + (Quell.tileSize / 2);
 			
-			Quell.draw.bubble($this.x, $this.y, $this.radius);
+			Quell.draw.raindrop($this.x, $this.y, $this.radius);
 			$this.direction = '';
 			$this.moving = false;
 		}
 		
-		this.drawBubble = function() {
+		this.drawRaindrop = function() {
 					
 			if (!this.started) {
-				this.initBubble();
+				this.initRaindrop();
 				return;
 			}
 			
 			if (!this.moving) {
-				Quell.draw.bubble(this.x, this.y, this.radius);
+				Quell.draw.raindrop(this.x, this.y, this.radius);
 				return;
 			}		
 			
@@ -380,24 +399,24 @@
 					break;
 			}
 			
-			Quell.draw.bubble(this.x, this.y, this.radius);
+			Quell.draw.raindrop(this.x, this.y, this.radius);
 			
-			// If the bubble is overlapping a edge, draw the edge over the top of it
+			// If the Raindrop is overlapping a edge, draw the edge over the top of it
 			edgeTest();
 			
 			offMapTests();		
 		}
 		
-		this.initBubble = function() {
-			for (i = 0, j = this.collisionMap.length; i < j; i++) {
+		this.initRaindrop = function() {
+			for (i = 0, j = Quell.currentMap.length; i < j; i++) {
 							
-				for (x = 0, y = this.collisionMap[i].length; x < y; x++) {
-					if (this.collisionMap[i][x] != 9) continue;
+				for (x = 0, y = Quell.currentMap[i].length; x < y; x++) {
+					if (Quell.currentMap[i][x] != 9) continue;
 					
 					this.x = (x * Quell.tileSize) + (Quell.tileSize / 2),
 					this.y = (i * Quell.tileSize) + (Quell.tileSize / 2);
 						
-					Quell.draw.bubble(this.x, this.y, this.radius);
+					Quell.draw.raindrop(this.x, this.y, this.radius);
 					
 					break;  
 				}
@@ -432,7 +451,7 @@
 			}
 							
 			this.moving = true;		
-			this.drawBubble();
+			this.drawRaindrop();
 		}
 	}
 	
@@ -459,7 +478,7 @@
 			if (image == 'nothing') return;
 			this.ctx.drawImage(images[image], x, y, Quell.tileSize, Quell.tileSize);
 		},
-		bubble: function(x, y, radius) {
+		raindrop: function(x, y, radius) {
 			this.ctx.beginPath();
 			this.ctx.fillStyle = '#2B65EC';
 			this.ctx.arc(x, y, radius, 0, Math.PI*2, false);
@@ -475,12 +494,12 @@
 		// Register the event handlers
 		function registerEvents() {
 		
-			document.onkeyup = function(e) {
-				bubble.move(e);
+			window.document.onkeyup = function(e) {
+				raindrop.move(e);
 			}
 		}
 		
-		var ctx = document.getElementById('canvas').getContext('2d');	
+		var ctx = window.document.getElementById('canvas').getContext('2d');	
 		
 		Quell.draw = new Draw(ctx);
 		
@@ -496,8 +515,11 @@
 		};
 		
 		images = loadImages(sources);
+		
+		Quell.currentMap = clone(Quell.maps.level1);
+		
 		var map = new Map(ctx);
-		var bubble = new Bubble(map.collisionMap);	
+		var raindrop = new Raindrop();	
 			
 		map.init();
 		registerEvents();
@@ -505,7 +527,7 @@
 		function go() {
 			Quell.draw.clear();
 			map.drawMap();
-			bubble.drawBubble();
+			raindrop.drawRaindrop();
 		}
 	
 		Quell.loop = setInterval(function() {	
@@ -514,4 +536,4 @@
 		
 		
 	}
-})();
+})(window);
