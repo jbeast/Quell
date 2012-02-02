@@ -13,28 +13,17 @@
 		loop: '',
 		debug: 0,
 		maps: {
-			level1: 
-				[
-					[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-					[1,0,0,0,0,0,2,3,0,0,0,3,0,0,1],
-					[1,0,0,0,2,0,9,0,0,6,2,0,0,0,1],
-					[1,0,0,0,0,4,0,2,0,2,2,3,0,0,1],
-					[1,0,0,0,0,2,0,3,0,2,0,2,0,0,1],
-					[1,0,3,0,0,2,3,0,0,0,0,0,0,0,1],
-					[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]	
-				],
-			level2: 
-				[
-					[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-					[1,0,0,0,0,0,2,3,0,0,0,3,0,0,1],
-					[1,0,0,0,2,0,9,0,0,6,2,0,0,0,1],
-					[1,0,0,0,0,4,0,2,0,2,2,3,0,0,1],
-					[1,0,0,0,0,2,0,3,0,2,0,2,0,0,1],
-					[1,0,3,0,0,2,3,0,0,0,0,0,0,0,1],
-					[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]	
-				],
-		},
+			1: [
+			[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+			[1,0,0,0,0,0,2,3,0,0,0,3,0,0,1],
+			[1,0,0,0,2,0,9,0,0,6,2,0,0,0,1],
+			[1,0,0,0,0,4,0,2,0,2,2,3,0,0,1],
+			[1,0,0,0,0,2,0,3,0,2,0,2,0,0,1],
+			[1,0,3,0,0,2,3,0,0,0,0,0,0,0,1],
+			[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]	
+		],
 		currentMap: []
+		}
 	};
 	
 	var images;
@@ -61,17 +50,18 @@
 		return images;
 	}
 	
-	// http://stackoverflow.com/questions/122102/what-is-the-most-efficient-way-to-clone-a-javascript-object
-	function clone(obj){
-	    if(obj == null || typeof(obj) != 'object')
-	        return obj;
+	function clone(obj) {
+	    if (null == obj || "object" != typeof obj) return obj;
+	    var copy = obj.constructor();
+	    for (var attr in obj) {
+	        if (obj.hasOwnProperty(attr)) copy[attr] = obj[attr];
+	    }
+	    return copy;
+	}
+
 	
-	    var temp = obj.constructor(); // changed
+	debug('Starting...');
 	
-	    for(var key in obj)
-	        temp[key] = clone(obj[key]);
-	    return temp;
-	}	
 	
 /*******************************************************************************
  * Map Class
@@ -139,7 +129,7 @@
 		this.moving = false;
 		this.radius = 15;
 		this.direction = '';
-		this.x = 0; // Raindrop's center 
+		this.x = 0; // raindrop's center 
 		this.y = 0;
 		this.speed = 10;
 		this.currentTile = {};
@@ -212,8 +202,8 @@
 			}
 		}
 		
-		// Tests whether the opposite side of the map to the one that the Raindrop is going through
-		// has a wall/spike/gate blocking it. MUST BE ABLE TO SIMPLIFY IT SURELY!!!!!
+		// Tests whether the opposite side of the map to the one that the raindrop is going through
+		// has a wall blocking it. MUST BE ABLE TO SIMPLIFY IT SURELY!!!!!
 		var wallStopTest = function(x, y) {
 			switch ($this.direction) {
 				case 'left': 
@@ -360,7 +350,9 @@
 					break; 
 			}
 					
-			this.x = (x * Quell.tileSize) + (Quell.tileSize / 2),
+			debug(x + ' ' + y);
+	
+			$this.x = (x * Quell.tileSize) + (Quell.tileSize / 2),
 			$this.y = (y * Quell.tileSize) + (Quell.tileSize / 2);
 			
 			Quell.draw.raindrop($this.x, $this.y, $this.radius);
@@ -401,7 +393,7 @@
 			
 			Quell.draw.raindrop(this.x, this.y, this.radius);
 			
-			// If the Raindrop is overlapping a edge, draw the edge over the top of it
+			// If the raindrop is overlapping a edge, draw the edge over the top of it
 			edgeTest();
 			
 			offMapTests();		
@@ -494,12 +486,12 @@
 		// Register the event handlers
 		function registerEvents() {
 		
-			window.document.onkeyup = function(e) {
+			document.onkeyup = function(e) {
 				raindrop.move(e);
 			}
 		}
 		
-		var ctx = window.document.getElementById('canvas').getContext('2d');	
+		var ctx = document.getElementById('canvas').getContext('2d');	
 		
 		Quell.draw = new Draw(ctx);
 		
@@ -516,7 +508,9 @@
 		
 		images = loadImages(sources);
 		
-		Quell.currentMap = clone(Quell.maps.level1);
+		Quell.currentMap = clone(Quell.maps[1]);
+		
+		
 		
 		var map = new Map(ctx);
 		var raindrop = new Raindrop();	
