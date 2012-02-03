@@ -15,11 +15,11 @@
 		maps: {
 			1: [
 			[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-			[1,0,0,0,0,0,2,3,0,0,0,3,0,0,1],
+			[1,10,0,0,0,0,2,3,0,0,0,3,0,0,1],
 			[1,0,0,0,2,0,9,0,0,6,2,0,0,0,1],
-			[1,0,0,0,0,4,0,2,0,2,2,3,0,0,1],
+			[1,10,0,11,0,4,0,2,0,2,2,3,0,0,1],
 			[1,0,0,0,0,2,0,3,0,2,0,2,0,0,1],
-			[1,0,3,0,0,2,3,0,0,0,0,0,0,0,1],
+			[1,11,0,0,0,2,3,0,0,0,0,0,0,0,1],
 			[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]	
 		],
 		currentMap: []
@@ -135,6 +135,7 @@
 		this.y = 0;
 		this.speed = 10;
 		this.currentTile = {};
+		this.gateQueue = [];
 		
 		var $this = this;
 		
@@ -153,6 +154,7 @@
 					}
 					return false;
 					break;
+				case 11:
 				case 2:
 					debug('stop stop stop');
 					
@@ -187,9 +189,34 @@
 				case 8:
 					return testSpike('all');
 					break;
+				case 10:
+					addToGateQueue($this.currentTile['x'], $this.currentTile['y']);
+					return false;
+					break;					
 			}
 			
 			return false;
+		}
+		
+		var closeGates = function() {
+			
+			var length = $this.gateQueue.length;
+			
+			if (length == 0) {
+				return;
+			}
+			
+			for (var i = 0; i < length; i++) {
+				if ($this.gateQueue[i] == undefined) continue; // ...bit hacky				
+				if ($this.gateQueue[i][0] != $this.currentTile['x'] || $this.gateQueue[i][1] != $this.currentTile['y']) {
+					Quell.currentMap[$this.gateQueue[i][1]][$this.gateQueue[i][0]] = 11;
+					delete $this.gateQueue[i];
+				}				
+			}
+		}
+		
+		var addToGateQueue = function(x,y) {
+			$this.gateQueue.push([x,y]);
 		}
 		
 		var testSpike = function(direction) {
@@ -215,7 +242,7 @@
 					
 					var tile = Quell.currentMap[y][i-1];
 					
-					if (tile == 2 || tile == 4 || tile == 5 || tile == 6) {
+					if (tile == 2 || tile == 4 || tile == 5 || tile == 6 || tile == 11) {
 						return true;
 					}
 					
@@ -228,7 +255,7 @@
 					
 					var tile = Quell.currentMap[i-1][x]; 
 					
-					if (tile == 2 || tile == 4 || tile == 6 || tile == 7) {
+					if (tile == 2 || tile == 4 || tile == 6 || tile == 7  || tile == 11) {
 						return true;
 					}
 					
@@ -239,9 +266,9 @@
 						if (Quell.currentMap[y][i] == 1) break;
 					}
 					
-					var test = Quell.currentMap[y][i+1];	
+					var tile = Quell.currentMap[y][i+1];	
 					
-					if (test == 2 || test == 4 || test == 5 || test == 7) {
+					if (tile == 2 || tile == 4 || tile == 5 || tile == 7 || tile == 11) {
 						return true;
 					}
 					
@@ -253,9 +280,9 @@
 						if (Quell.currentMap[i][x] == 1) break;
 					}
 					
-					var test = Quell.currentMap[i+1][x];
+					var tile = Quell.currentMap[i+1][x];
 					
-					if (test == 2 || test == 5 || test == 6 || test == 7) {
+					if (tile == 2 || tile == 5 || tile == 6 || tile == 7 || tile == 11) {
 						return true;
 					}
 					
@@ -395,10 +422,12 @@
 			
 			Quell.draw.raindrop(this.x, this.y, this.radius);
 			
-			// If the raindrop is overlapping a edge, draw the edge over the top of it
+			// If the raindrop is overlapping an edge, draw the edge over the top of it
 			edgeTest();
 			
 			offMapTests();		
+			
+			closeGates();
 		}
 		
 		this.initRaindrop = function() {
@@ -505,7 +534,11 @@
 			upSpike: 'upSpike.png',
 			downSpike: 'downSpike.png',
 			leftSpike: 'leftSpike.png',
-			rightSpike: 'rightSpike.png'
+			rightSpike: 'rightSpike.png',
+			allWaysSpike: 'allWaysSpike.png',
+			closedGate: 'closedGate.png',
+			openGate: 'openGate.png',
+			goldRing: 'goldRing.png'
 		};
 		
 		images = loadImages(sources);
